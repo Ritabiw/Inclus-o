@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Corrida das Cores - Turma da Mônica!</title>
+    <link rel="stylesheet" href="../../../hy.css">
+    <style>
+
+    @font-face {
+    font-family: 'Coiny';
+    /* Certifique-se de que o nome do arquivo abaixo é exatamente o mesmo que você baixou na sua pasta */
+    src: url('../../../Coiny/Coiny-Regular.ttf') format('truetype'); 
+}
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Coiny', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            letter-spacing: 2px;
+            overflow: hidden;
+            user-select: none;
+            touch-action: none; 
+        }
+        
+        #tela-inicial {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #000000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50; 
+        }
+        #tela-inicial h1 {
+            color: #f8d7d7;
+            font-size: clamp(30px, 6vw, 50px);
+            text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3); /* Remove o contorno preto e deixa apenas uma sombra suave */
+            margin-bottom: 40px;
+            text-align: center;
+            line-height: 1.4;
+        }
+        #btn-comecar {
+         position: relative;
+        width: 150px;
+        height: 55px;
+        border-radius: 45px;
+        border: none;
+        background-color: rgba(31, 31, 31, 0.925);
+        color: white;
+        box-shadow: 0px 10px 10px rgb(210, 187, 253) inset,
+        0px 5px 10px rgba(5, 5, 5, 0.212),
+        0px -10px 10px rgb(224, 85, 4) inset;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pular 2s infinite;
+        }
+
+        @keyframes pular {
+        0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+        }
+        40% {
+        transform: translateY(-20px);
+        }
+        60% {
+        transform: translateY(-10px);
+        }
+
+        }
+
+        .Btn::before {
+        width: 70%;
+        height: 2px;
+        position: absolute;
+        background-color: rgba(250, 250, 250, 0.678);
+        content: "";
+        filter: blur(1px);
+        top: 7px;
+        border-radius: 50%;
+        }
+
+.Btn::after {
+  width: 70%;
+  height: 2px;
+  position: absolute;
+  background-color: rgba(250, 250, 250, 0.137);
+  content: "";
+  filter: blur(1px);
+  bottom: 7px;
+  border-radius: 50%;
+}
+
+.Btn:hover {
+  animation: jello-horizontal 0.9s both;
+}
+
+@keyframes jello-horizontal {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+
+  30% {
+    transform: scale3d(1.25, 0.75, 1);
+  }
+
+  40% {
+    transform: scale3d(0.75, 1.25, 1);
+  }
+
+  50% {
+    transform: scale3d(1.15, 0.85, 1);
+  }
+
+  65% {
+    transform: scale3d(0.95, 1.05, 1);
+  }
+
+  75% {
+    transform: scale3d(1.05, 0.95, 1);
+  }
+
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+        #btn-comecar:active {
+            transform: translateY(8px);
+            box-shadow: none;
+        }
+
+        #ui-topo {
+            position: absolute;
+            top: 5%;
+            text-align: center;
+            width: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #placar {
+            font-size: clamp(20px, 4vw, 32px);
+            font-weight: bold;
+            background-color: #FFF;
+            padding: 10px 30px;
+            border-radius: 30px;
+            border: 4px solid #333;
+            display: inline-block;
+            color: #333;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1; 
+        }
+        .personagem-gif {
+            position: absolute;
+            pointer-events: none; 
+            z-index: 5; 
+            display: none; 
+        }
+        
+        #tela-vitoria {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9); 
+            text-shadow: #000 2px 2px 0px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            display: none;
+            z-index: 100; 
+        }
+
+        #video-intro {
+        position: fixed;
+        top: 50%;
+        left: 50%; 
+        width: 90vw;
+        height: auto;
+        max-height: 90vh;
+        transform: translate(-50%, -50%);
+         object-fit: contain;
+        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.9);
+            
+        }
+    
+        #meu-video {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 90vw;
+        height: auto;
+        max-height: 90vh;
+        transform: translate(-50%, -50%);
+        object-fit: contain;
+        border-radius: 20px;
+        background: #000;
+        }
+
+    .fundo-escurecido {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7); /* O 0.7 é a intensidade: 0.1 é claro, 0.9 é quase preto */
+    z-index: 99; /* Fica atrás do vídeo, mas na frente de qualquer outra coisa */
+    pointer-events: none; /* Faz com que o clique passe direto pela camada */
+}
+
+        .btn {
+            font-size: clamp(18px, 4vw, 24px);
+            font-family: 'Coiny', sans-serif;
+            background-color: #3498db;
+            color: #fff;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: transform 0.2s, background-color 0.3s;
+            width: 80%;
+            max-width: 350px;
+            text-align: center;
+            animation: surgir 0.5s ease-in-out;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+
+        @keyframes surgir {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+<div id="contador-cores" style="display:none;">0</div>
+
+      <div id="tela-inicial">
+        <h1>CORRIDA DAS CORES</h1>
+        <button id="btn-comecar" style="font-family: 'Coiny';">PLAY</button>
+    </div>
+    
+    <div id="tela-introducao"  >
+        
+    <video id="video-intro" playsinline preload="auto" style= "position:center; width: 100%; height: 100%; object-fit: contain">
+        
+        <source src="introducao.mp4" type="video/mp4">
+    </video> 
+</div>
+
+    
+    <div id="tela-vitoria">
+        <video id="meu-video" playsinline preload="auto" style= "position:center; width: 100%; height: 100%; object-fit: contain">
+        <source src="gameover.mp4" type="video/mp4"></video>
+        <div id="botoes-fim" style="display:none; flex-direction: column; gap: 15px; margin-top: 30px; align-items: center; width: 100%; z-index: 101;">
+            <button id="btn-reiniciar" class="btn">Jogar novamente</button>
+            <button id="btn-inicio" class="btn" onclick="window.top.location.href='../../../index.html'">Início</button>
+        </div>
+    </div>
+
+    <img id="gif-monica" class="personagem-gif" src="692a4dd4098e79bc5ac3a3411253e5c9.gif">
+    <img id="gif-cebolinha" class="personagem-gif" src="a8fa6b5667d11b2d78d3c3834742b907.gif">
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const contadorCoresTxt = document.getElementById("contador-cores");
+        const telaVitoria = document.getElementById("tela-vitoria");
+        const btnReiniciar = document.getElementById("btn-reiniciar");
+        const telaInicial = document.getElementById("tela-inicial");
+        const btnComecar = document.getElementById("btn-comecar");
+        
+        const telaIntro = document.getElementById("tela-introducao");
+        const videoIntro = document.getElementById("video-intro");
+        
+        const videoFinal = document.getElementById("meu-video");
+        
+        const domMonica = document.getElementById("gif-monica");
+        const domCebolinha = document.getElementById("gif-cebolinha");
+
+        const imgFundo = new Image();
+        imgFundo.src = 'cenario.png'; 
+
+        const musicaFundo = new Audio('musica.mp3');
+        musicaFundo.loop = true; 
+        musicaFundo.volume = 1.0;
+
+        const todasCores = [
+            { nome: "BLUE", hex: "#0055FF", texto: "#FFF" },
+            { nome: "RED", hex: "#FF3333", texto: "#FFF" },
+            { nome: "YELLOW", hex: "#FFFF00", texto: "#000" },
+            { nome: "GREEN", hex: "#00FF44", texto: "#000" },
+            { nome: "PURPLE", hex: "#AA00FF", texto: "#FFF" },
+            { nome: "PINK", hex: "#FF66CC", texto: "#000" },
+            { nome: "ORANGE", hex: "#FF8800", texto: "#000" },
+            { nome: "WHITE", hex: "#FFFFFF", texto: "#000" },
+            { nome: "BROWN", hex: "#8B4513", texto: "#FFF" },
+            { nome: "BLACK", hex: "#000000", texto: "#FFF" },
+            { nome: "GRAY", hex: "#808080", texto: "#FFF" },
+        ];
+
+        let frameCount = 0;
+        let coresEncontradas = new Set(); 
+        let chaoY = 0; 
+        let jogoRodando = false; 
+        let velocidadeJogo = 4;
+        let corDoCeu = "#87CEEB"; 
+        
+        let fundoX = 0; 
+        let ultimaCorGerada = null;
+        let terminandoJogo = false;
+
+        const monica = {
+            x: 50, y: 0,
+            larguraFisica: 0, alturaFisica: 0,
+            velocidadeY: 0,
+            gravidade: 0.6, 
+            forcaPulo: -16, 
+            pulando: false
+        };
+
+        const cebolinha = { x: 0, y: 0, larguraFisica: 0, alturaFisica: 0 };
+        let quadros = []; 
+
+        function redimensionarCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            chaoY = canvas.height - (canvas.height * 0.2); 
+            
+            const proporcao = Math.max(Math.min(canvas.width, canvas.height) * 0.3, 120);
+            
+            monica.larguraFisica = proporcao * 0.8;
+            monica.alturaFisica = proporcao;
+            monica.y = chaoY - monica.alturaFisica;
+            
+            cebolinha.larguraFisica = proporcao * 0.8;
+            cebolinha.alturaFisica = proporcao;
+            cebolinha.x = canvas.width - cebolinha.larguraFisica - (canvas.width * 0.1); 
+            cebolinha.y = chaoY - cebolinha.alturaFisica;
+        }
+
+        window.addEventListener('resize', redimensionarCanvas);
+
+        // --- 1. Botão Começar ---
+       btnComecar.addEventListener("click", () => {
+       telaInicial.style.display = "none";
+       telaIntro.style.display = "flex";
+
+    // Forçamos o carregamento e o play no elemento de vídeo
+       // vídeo com som habilitado // Necessário para autoplay no Chrome/Safari
+       videoIntro.play().then(() => {
+        console.log("Vídeo iniciado com sucesso!");
+       }).catch(error => {
+        console.error("Erro na reprodução automática:", error);
+       });
+    });
+
+// --- 2. Transição ao terminar ---
+videoIntro.addEventListener("ended", () => {
+    telaIntro.style.display = "none";
+    
+    // Agora que o vídeo terminou, liberamos o som do jogo
+    domMonica.style.display = "block";
+    domCebolinha.style.display = "block";
+    musicaFundo.currentTime = 0;
+    musicaFundo.play().catch(() => {});
+    
+    jogoRodando = true;
+    redimensionarCanvas();
+    loop();
+});
+
+        function lidarComToque(e) {
+            if (e) e.preventDefault();
+            if (!jogoRodando) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const toqueX = clientX - rect.left;
+            const toqueY = clientY - rect.top;
+
+            let acertouOQuadro = false;
+
+            for (let i = 0; i < quadros.length; i++) {
+                let quadro = quadros[i];
+                if (!quadro.coletado) {
+                    const margem = 20; 
+                    if (toqueX >= quadro.x - margem && toqueX <= quadro.x + quadro.tamanho + margem &&
+                        toqueY >= quadro.y - margem && toqueY <= quadro.y + quadro.tamanho + margem) {
+                        
+                        acertouOQuadro = true;
+                        quadro.coletado = true;
+                        corDoCeu = quadro.cor.hex; 
+                        coresEncontradas.add(quadro.cor.nome);
+                        contadorCoresTxt.innerText = coresEncontradas.size;
+                        quadro.x = -1000; 
+
+                        if (coresEncontradas.size === todasCores.length && !terminandoJogo) {
+                            terminandoJogo = true;
+                            setTimeout(vitoria, 3000); 
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (!acertouOQuadro && !monica.pulando) {
+                monica.velocidadeY = monica.forcaPulo;
+                monica.pulando = true;
+            }
+        }
+
+        canvas.addEventListener("touchstart", lidarComToque, { passive: false });
+        canvas.addEventListener("mousedown", lidarComToque);
+
+        function gerarQuadro() {
+            if (terminandoJogo) return; // Impede gerar novos quadros ao coletar todos
+
+            const tamanho = monica.alturaFisica * 0.6; 
+            let coresFaltando = todasCores.filter(cor => !coresEncontradas.has(cor.nome));
+            if (coresFaltando.length === 0) coresFaltando = todasCores;
+
+            // Evita gerar a mesma cor duas vezes seguidas
+            if (coresFaltando.length > 1 && ultimaCorGerada) {
+                coresFaltando = coresFaltando.filter(cor => cor.nome !== ultimaCorGerada.nome);
+            }
+
+            const corSorteada = coresFaltando[Math.floor(Math.random() * coresFaltando.length)];
+            ultimaCorGerada = corSorteada;
+            const vaiSerNoAlto = Math.random() > 0.5;
+            
+            const alturaBaixo = chaoY - tamanho - 10; 
+            const alturaAlto = chaoY - monica.alturaFisica - (tamanho * 1.5); 
+            
+            const yFixo = vaiSerNoAlto ? alturaAlto : alturaBaixo;
+
+            quadros.push({
+                x: canvas.width + tamanho,
+                y: yFixo,
+                tamanho: tamanho,
+                coletado: false,
+                cor: corSorteada
+            });
+        }
+
+        function vitoria() {
+            jogoRodando = false;
+            musicaFundo.pause(); 
+            telaVitoria.style.display = "flex";
+            domMonica.style.display = "none";
+            domCebolinha.style.display = "none";
+            document.getElementById("botoes-fim").style.display = "none";
+            videoFinal.style.display = "block";
+            videoFinal.currentTime = 0;
+            videoFinal.play().catch(() => {});
+        }
+
+        videoFinal.addEventListener('ended', () => {
+            videoFinal.style.display = "none";
+            document.getElementById("botoes-fim").style.display = "flex";
+        });
+
+        function atualizar() {
+            if (!jogoRodando) return;
+
+            frameCount++;
+            if (frameCount % 600 === 0 && velocidadeJogo < 8) velocidadeJogo += 0.5;
+
+            monica.y += monica.velocidadeY;
+            monica.velocidadeY += monica.gravidade;
+
+            if (monica.y >= chaoY - monica.alturaFisica) {
+                monica.y = chaoY - monica.alturaFisica;
+                monica.pulando = false;
+                monica.velocidadeY = 0;
+            }
+            
+            // --- CÁLCULO DE PROPORÇÃO E MOVIMENTO DO FUNDO ---
+            let fundoLargura = canvas.width; 
+            if (imgFundo.complete && imgFundo.naturalHeight !== 0) {
+                let proporcaoFundo = canvas.height / imgFundo.naturalHeight;
+                fundoLargura = imgFundo.naturalWidth * proporcaoFundo;
+            }
+            
+            fundoX -= velocidadeJogo * 0.5; 
+            
+            // Se o fundo sair da tela, volta suavemente mantendo a largura proporcional
+            if (fundoX <= -fundoLargura) {
+                fundoX += fundoLargura;
+            }
+            // ------------------------------------------------
+
+            if (frameCount % Math.max(90, Math.floor(150 - velocidadeJogo * 5)) === 0) {
+                if (Math.random() > 0.2) gerarQuadro(); 
+            }
+
+            for (let i = 0; i < quadros.length; i++) {
+                let quadro = quadros[i];
+                quadro.x -= velocidadeJogo; 
+
+                let pegouQuadroFisicamente = (
+                    monica.x < quadro.x + quadro.tamanho &&
+                    monica.x + monica.larguraFisica > quadro.x &&
+                    monica.y < quadro.y + quadro.tamanho &&
+                    monica.y + monica.alturaFisica > quadro.y
+                );
+
+                if (!quadro.coletado && pegouQuadroFisicamente) {
+                    quadro.coletado = true;
+                    corDoCeu = quadro.cor.hex; 
+                    coresEncontradas.add(quadro.cor.nome);
+                    contadorCoresTxt.innerText = coresEncontradas.size;
+                    quadro.x = -1000; 
+
+                    if (coresEncontradas.size === todasCores.length && !terminandoJogo) {
+                        terminandoJogo = true;
+                        setTimeout(vitoria, 3000); 
+                    }
+                }
+            }
+            quadros = quadros.filter(q => q.x + q.tamanho > -50);
+        }
+
+        btnReiniciar.addEventListener("click", () => {
+            videoFinal.pause();
+            
+            document.getElementById("botoes-fim").style.display = "none";
+            
+            quadros = [];
+            coresEncontradas.clear();
+            contadorCoresTxt.innerText = "0";
+            velocidadeJogo = 4;
+            frameCount = 0;
+            corDoCeu = "#87CEEB"; 
+            
+            fundoX = 0; 
+            ultimaCorGerada = null;
+            terminandoJogo = false;
+            
+            monica.y = chaoY - monica.alturaFisica;
+            monica.velocidadeY = 0;
+            monica.pulando = false;
+            
+            telaVitoria.style.display = "none";
+            domMonica.style.display = "block";
+            domCebolinha.style.display = "block";
+            
+            musicaFundo.currentTime = 0;
+            musicaFundo.play().catch(() => {});
+            
+            jogoRodando = true;
+            loop();
+        });
+
+        function desenhar() {
+            if (!jogoRodando) return; 
+
+            // --- DESENHA O FUNDO PROPORCIONAL E REPETIDO ---
+            if (imgFundo.complete && imgFundo.naturalHeight !== 0) {
+                // Calcula a proporção para manter a imagem com a altura da tela
+                let proporcaoFundo = canvas.height / imgFundo.naturalHeight;
+                let fundoLargura = imgFundo.naturalWidth * proporcaoFundo;
+                
+                // Calcula quantas cópias da imagem precisa para cobrir a tela do celular/PC
+                let quantidadeImagens = Math.ceil(canvas.width / fundoLargura) + 1;
+                
+                for (let i = 0; i < quantidadeImagens; i++) {
+                    ctx.drawImage(imgFundo, fundoX + (i * fundoLargura), 0, fundoLargura, canvas.height);
+                }
+            } else {
+                ctx.fillStyle = "#FFF";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Chão e grama mantidos como base segura de piso
+            ctx.fillStyle = "#98FB98"; 
+            // --- TEXTURA DO CHÃO (Grama e Terra com Gradiente) ---
+            // Terra (Fundo com profundidade)
+            let gradTerra = ctx.createLinearGradient(0, chaoY, 0, canvas.height);
+            gradTerra.addColorStop(0, "#8B4513");
+            gradTerra.addColorStop(1, "#4A250A");
+            ctx.fillStyle = gradTerra; 
+            ctx.fillRect(0, chaoY, canvas.width, canvas.height - chaoY);
+            ctx.fillStyle = "#8B4513"; 
+            ctx.fillRect(0, chaoY, canvas.width, 10);
+            
+            // Grama (Topo com variação de cor)
+            let gradGrama = ctx.createLinearGradient(0, chaoY, 0, chaoY + 20);
+            gradGrama.addColorStop(0, "#7CFC00"); // Verde claro brilhante no topo
+            gradGrama.addColorStop(1, "#228B22"); // Verde escuro na base da grama
+            ctx.fillStyle = gradGrama; 
+            ctx.fillRect(0, chaoY, canvas.width, 20);
+
+            // Filtro da cor (efeito mágico no cenário)
+            ctx.globalAlpha = 0.4; 
+            ctx.fillStyle = corDoCeu;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 1.0; 
+
+            // Desenha os quadros
+            for (let quadro of quadros) {
+                if (!quadro.coletado) {
+                    ctx.beginPath();
+                    if (ctx.roundRect) {
+                        ctx.roundRect(quadro.x, quadro.y, quadro.tamanho, quadro.tamanho, 20); 
+                    } else {
+                        ctx.rect(quadro.x, quadro.y, quadro.tamanho, quadro.tamanho);
+                    }
+                    
+                    // Sombra para dar volume e textura 3D ao bloco
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+                    ctx.shadowBlur = 8;
+                    ctx.shadowOffsetX = 4;
+                    ctx.shadowOffsetY = 4;
+
+                    ctx.fillStyle = quadro.cor.hex;
+                    ctx.fill();
+
+                    // Restaura a sombra para não afetar o contorno e o texto
+                    ctx.shadowColor = "transparent";
+
+                    ctx.lineWidth = 5;
+                    ctx.strokeStyle = "#FFF";
+                    ctx.stroke();
+                    
+                    // Efeito de brilho (reflexo de luz/vidro) no topo do bloco
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+                    ctx.beginPath();
+                    if (ctx.roundRect) {
+                        ctx.roundRect(quadro.x, quadro.y, quadro.tamanho, quadro.tamanho * 0.35, [20, 20, 0, 0]); 
+                    } else {
+                        ctx.rect(quadro.x, quadro.y, quadro.tamanho, quadro.tamanho * 0.35);
+                    }
+                    ctx.fill();
+
+                    ctx.fillStyle = quadro.cor.texto;
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    const fontSize = quadro.tamanho * 0.25; 
+                    ctx.font = `bold ${fontSize}px "Coiny"`;
+                    ctx.fillText(quadro.cor.nome, quadro.x + (quadro.tamanho / 2), quadro.y + (quadro.tamanho / 2));
+                }
+            }
+
+            // Animação dos GIFs
+            let saltoCorrida = (!monica.pulando && frameCount % 12 < 6) ? -5 : 0;
+            let saltoCebolinha = (frameCount % 10 > 5) ? -5 : 0;
+
+            domMonica.style.width = monica.larguraFisica + "px";
+            domMonica.style.height = monica.alturaFisica + "px";
+            domMonica.style.left = monica.x + "px";
+            domMonica.style.top = (monica.y + saltoCorrida) + "px";
+
+            domCebolinha.style.width = cebolinha.larguraFisica + "px";
+            domCebolinha.style.height = cebolinha.alturaFisica + "px";
+            domCebolinha.style.left = cebolinha.x + "px";
+            domCebolinha.style.top = (cebolinha.y + saltoCebolinha) + "px";
+        }
+
+        function loop() {
+            if (jogoRodando) {
+                atualizar();
+                desenhar();
+                requestAnimationFrame(loop);
+            }
+        }
+
+        redimensionarCanvas();
+</script>
+</body>
+</html>
