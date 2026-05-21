@@ -5,13 +5,13 @@
 }
 
 @font-face {
-    font-family: 'Prachason Neue';
+    font-family: 'Coiny';
     /* Certifique-se de que o nome do arquivo abaixo é exatamente o mesmo que você baixou na sua pasta */
-    src: url('Neue Bold/Neue Bold.ttf') format('truetype'); 
+    src: url('Coiny/Coiny-Regular.ttf') format('truetype'); 
 }
 
 body{   
-    font-family: 'Prachason Neue';
+    font-family: 'Coiny';
     background: #031163;
     color: rgb(255, 0, 0);
     min-height: 100vh;
@@ -54,17 +54,18 @@ body{
     color: #1a1a1a;
     font-size: 1.1rem;
     text-align: center;
+    margin-top: -10px; /* Puxa o parágrafo para mais perto do título */
 }
 
 .title {
-    font-family: 'Prachason Neue', sans-serif;
-    font-size: clamp(1.5rem, 4vw, 3rem);
+    font-family: 'Coiny', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
     font-weight: bold;
     text-align: center;
-    color: rgb(19, 16, 16);
+    color: #d11e1e;
 
-    margin-bottom: 20px;
-    text-shadow: 2px 2px 5px rgb(0, 0, 0);
+    margin-bottom: 0;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
 
 
 }
@@ -100,15 +101,19 @@ body{
 
 .card__descr-wrapper {
   padding: 15px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
 }
 
 .card__title {
   color: var(--font-color);
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 0;
   font-weight: 900;
-  font-size: 16px;
+  font-size: 22px;
 }
 
 .svg {
@@ -123,4 +128,31 @@ body{
   display: flex;
   justify-content: space-between;
   align-self: flex-end;
+}
+
+.arrow {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    z-index: 1000;
+    transition: transform 0.2s ease-in-out;
+    background-color: #1a1a1a;
+    border-radius: 50%;
+    color: #ffffff;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.arrow a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.arrow:hover {
+    transform: scale(1.15);
 }

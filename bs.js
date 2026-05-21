@@ -4,6 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const cards = document.querySelectorAll('.card');
 
     cards.forEach(card => {
+        // Remove a transição uma única vez ao entrar no card, em vez de várias vezes ao mover
+        card.addEventListener('mouseenter', () => {
+            card.style.transition = 'none';
+        });
+
         // Evento que dispara enquanto o mouse se move DENTRO do card
         card.addEventListener('mousemove', (e) => {
             const rect = card.getBoundingClientRect();
@@ -17,9 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const rotateX = ((y - centerY) / centerY) * -15; 
             const rotateY = ((x - centerX) / centerX) * 15;
 
-            // Aplica a rotação e remove a transição para seguir o mouse instantaneamente
+            // Aplica a rotação instantaneamente (transição removida no mouseenter)
             card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
-            card.style.transition = 'none';
         });
 
         // Evento que dispara quando o mouse SAI do card
