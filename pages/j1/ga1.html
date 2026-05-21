@@ -6,6 +6,11 @@
     <link rel="stylesheet" href="../../hy.css">
     <title>Jogo da Memória</title>
     <style>
+        @font-face {
+            font-family: 'Coiny';
+            src: url('../../Coiny/Coiny-Regular.ttf') format('truetype'); 
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -17,14 +22,30 @@
             padding: 20px;
             box-sizing: border-box;
         }
-        h1 { margin-bottom: 5px; }
-        #level-indicator { margin-bottom: 20px; color: #3498db; }
+        h1 { 
+            margin-bottom: 5px; 
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+        }
+        #level-indicator { margin-bottom: 0; color: #000000; }
         
         #game-board {
             display: grid;
             gap: 10px;
             margin-top: 20px;
             width: 100%;
+            position: relative;
+        }
+        
+        #game-board.loading::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background-color: rgba(0, 0, 0, 0.756);
+            z-index: 10;
+            border-radius: 15px;
         }
         
         .card {
@@ -51,10 +72,6 @@
             height: 80%;
              object-fit: cover;
             border-radius: 10px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             display: none;
             pointer-events: none;
         }
@@ -77,26 +94,62 @@
         }
 
         .card.matched img {
-            display: block;
             opacity: 0.8;
         }
         
         #message {
-            margin-top: 25px;
-            font-size: 1.2em;
+            margin-top: 20px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            width: max-content;
+            max-width: 90%;
+            font-size: 1rem;
             font-weight: bold;
-            color: #000000;
-            min-height: 1.5em;
+            color: #ffd700;
+            background-color: rgba(0, 0, 0, 0.85);
+            text-align: center;
+            pointer-events: none;
         }
+
+        #message:empty {
+            display: none !important;
+        }
+        
+        .btn {
+            font-size: clamp(18px, 4vw, 24px);
+            font-family: 'Coiny', sans-serif;
+            background-color: #3498db;
+            color: #fff;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: transform 0.2s, background-color 0.3s;
+            width: 80%;
+            max-width: 350px;
+            text-align: center;
+            display: block;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+
     </style>
 </head>
 <body>
-    <div class="title">
+    <div class="title" >
         <h1>JOGO DA MEMÓRIA</h1>
     </div>
-    <h2 id="level-indicator">Fase: 1 / 12</h2>
-    <div id="game-board"></div>
+    <h2 id="level-indicator">Fase 1</h2>
     <div id="message"></div>
+    <div id="game-board"></div>
+    <div id="botoes-fim" style="display: none; flex-direction: column; align-items: center; width: 100%; gap: 15px; margin-top: 30px;">
+        <button class="btn" onclick="resetGame()">Jogar novamente</button>
+        <button id="btn-inicio" class="btn" onclick="goHome()">Início</button>
+    </div>
 
     <script>
         // Substitua os textos abaixo pelos caminhos ou URLs das suas próprias fotos.
@@ -113,11 +166,16 @@
             'photos/su.jpg'
         ];
         let currentLevel = 1;
+        let displayPhase = 1; // Variável que controla a fase mostrada na tela
         const totalLevels = 12;
         let pairsNeeded = 0;
         let flippedCards = [];
         let matchedPairs = 0;
         let isLocked = false;
+
+        // Instancia os áudios uma única vez para evitar sobrecarga de memória
+        const somAcerto = new Audio('acerto.mp3');
+        const somConquista = new Audio('conquista.mp3');
 
         const board = document.getElementById('game-board');
         const levelIndicator = document.getElementById('level-indicator');
@@ -134,10 +192,15 @@
         }
 
         function initLevel() {
+            board.classList.remove('loading'); // Garante que a camada seja removida ao iniciar a fase
+            
             if (currentLevel > totalLevels) {
                 board.innerHTML = '';
+                levelIndicator.style.display = 'none'; // Esconde o indicador de Fase
                 message.style.color = '#2ecc71';
-                message.textContent = '🎉 Parabéns! Você completou todas as 12 fases do jogo!';
+                message.style.pointerEvents = 'auto'; // Reativa os cliques dentro da div message
+                message.innerHTML = `<div>🎉 Parabéns! Você completou o jogo!</div>`;
+                document.getElementById('botoes-fim').style.display = 'flex';
                 return;
             }
 
@@ -145,8 +208,8 @@
             matchedPairs = 0;
             flippedCards = [];
             isLocked = true;
-            message.textContent = 'Memorize as cartas...';
-            levelIndicator.textContent = `Fase: ${currentLevel} / ${totalLevels} (${pairsNeeded} ${pairsNeeded === 1 ? 'par' : 'pares'})`;
+            message.textContent = `Atenção para a Fase ${displayPhase}!`;
+            levelIndicator.textContent = `Fase ${displayPhase}`;
 
             // Define quantas colunas o grid terá de acordo com a quantidade total de cartas (pares * 2)
             const totalCards = pairsNeeded * 2;
@@ -166,7 +229,6 @@
             cards.forEach(imageSrc => {
                 const card = document.createElement('div');
                 card.classList.add('card');
-                card.classList.add('flipped');
                 card.dataset.image = imageSrc;
                 
                 const img = document.createElement('img');
@@ -177,13 +239,19 @@
                 board.appendChild(card);
             });
             
-            // Esconde as cartas após 1 segundo
+            // Transição: Mostra o alerta por 1.5s antes de revelar as cartas
             setTimeout(() => {
+                message.textContent = 'Memorize os cards...';
                 const allCards = document.querySelectorAll('.card');
-                allCards.forEach(c => c.classList.remove('flipped'));
-                isLocked = false;
-                message.textContent = '';
-            }, 1000);
+                allCards.forEach(c => c.classList.add('flipped')); // Vira as cartas
+                
+                // Esconde as cartas após 2.5 segundos
+                setTimeout(() => {
+                    allCards.forEach(c => c.classList.remove('flipped'));
+                    isLocked = false;
+                    message.textContent = '';
+                }, 2500);
+            }, 1500);
         }
 
         function flipCard(card) {
@@ -210,16 +278,27 @@
                 flippedCards = [];
                 isLocked = false;
 
-                if (matchedPairs === pairsNeeded) {
-                    // Toca o som de aplausos ao concluir a fase
-                    const somAplausos = new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3'); 
-                    somAplausos.play().catch(erro => console.log("Áudio bloqueado:", erro));
+                // Toca som de acerto toda vez que acertar um par
+                somAcerto.currentTime = 0; // Reinicia o som para tocar novamente se necessário
+                somAcerto.play().catch(erro => console.log("Áudio bloqueado:", erro));
 
-                    message.textContent = 'Muito bem! Carregando a próxima fase...';
+                if (matchedPairs === pairsNeeded) {
+                    // Toca o som de conquista ao concluir um bloco de fases (fases 3, 9 e 12)
+                    if (currentLevel === 3 || currentLevel === 9 || currentLevel === 12) {
+                        somConquista.currentTime = 0;
+                        somConquista.play().catch(erro => console.log("Áudio bloqueado:", erro));
+                        displayPhase++; // Atualiza a fase visual apenas quando toca a conquista
+                    }
+
+                    message.innerHTML = ''; // Limpa a caixa de mensagens
+                    board.insertAdjacentHTML('beforeend', `<iframe src="relogio.html" width="80" height="80" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; border:none; overflow:hidden; background:transparent;" allowtransparency="true" scrolling="no" pointer-events="none"></iframe>`);
+                  
+                    board.classList.add('loading'); // Ativa a camada por cima dos cards
+                    
                     setTimeout(() => {
                         currentLevel++;
                         initLevel();
-                    }, 1500);
+                    }, 3000);
                 }
             } else {
                 // Errou o par
@@ -230,6 +309,20 @@
                     isLocked = false;
                 }, 1000);
             }
+        }
+
+        function resetGame() {
+            currentLevel = 1;
+            displayPhase = 1;
+            levelIndicator.style.display = 'block'; // Mostra novamente a fase
+            message.style.pointerEvents = 'none'; // Bloqueia cliques na mensagem de novo
+            message.style.color = '#ffd700'; // Volta a cor amarela original
+            document.getElementById('botoes-fim').style.display = 'none';
+            initLevel();
+        }
+
+        function goHome() {
+            window.top.location.href = '../../index.html'; 
         }
 
         // Inicia o jogo na fase 1
