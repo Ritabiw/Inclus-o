@@ -378,7 +378,7 @@
 
                 // Tamanho da fonte dinâmico
                 const fontSize = Math.min(palavra.largura * 0.15, palavra.altura * 0.35);
-                ctx.font = `${fontSize}px 'Coiny'`;
+                ctx.font = `bold ${fontSize}px Arial, sans-serif`;
 
                 // TEXTO: Recebe a cor da bolinha ANTES de conectar, ou a cor de contraste APÓS conectar!
                 if (palavra.conectado) {
@@ -386,9 +386,9 @@
                 } else {
                     ctx.fillStyle = palavra.corHex; 
                 }
-                ctx.fillText(palavra.nomeCor, palavra.x, palavra.y);
-                // Ajuste de +2 no Y e limite máximo de largura para manter "dentro" do bloco
-                ctx.fillText(palavra.nomeCor, palavra.x, palavra.y + 2, palavra.largura - 10);
+                
+                // Desenha o texto apenas uma vez com limite de largura
+                ctx.fillText(palavra.nomeCor, palavra.x, palavra.y, palavra.largura - 10);
             }
 
             // Desenhar as moedas subindo
