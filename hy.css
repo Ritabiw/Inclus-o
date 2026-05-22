@@ -15,15 +15,12 @@ body{
     background: #031163;
     color: rgb(255, 0, 0);
     min-height: 100vh;
-
+    display: flex;
+    padding: 20px;
 }
 
 .footer {
-    position:fixed;
-    top: 50%;
-    left: 50%;
-    
-    transform: translate(-50%, -50%);
+    margin: auto;
     width: 100%;
     max-width: 1200px;
     display: flex;
@@ -73,7 +70,8 @@ body{
 .card {
   --font-color: #323232;
   --bg-color: #e0e0e0;
-  width: 250px;
+  width: 100%;
+  max-width: 250px;
   height: 350px;
   border-radius: 20px;
   background: var(--bg-color);
@@ -155,4 +153,13 @@ body{
 
 .arrow:hover {
     transform: scale(1.15);
+}
+
+@media (max-width: 768px) {
+    .footer {
+        padding: 15px;
+    }
+    .cards-container {
+        gap: 15px; /* Reduz o espaço entre os cards em telas menores */
+    }
 }
