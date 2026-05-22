@@ -302,8 +302,11 @@
         const domMonica = document.getElementById("gif-monica");
         const domCebolinha = document.getElementById("gif-cebolinha");
 
-        const imgFundo = new Image();
-        imgFundo.src = 'cenario.png'; 
+        const imgFundo1 = new Image();
+        imgFundo1.src = 'cenario.png'; 
+
+        const imgFundo2 = new Image();
+        imgFundo2.src = 'cenarioinverso.png';
 
         const musicaFundo = new Audio('musica.mp3');
         musicaFundo.loop = true; 
@@ -349,9 +352,10 @@
         function redimensionarCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            chaoY = canvas.height - (canvas.height * 0.2); 
+            chaoY = canvas.height - (canvas.height * 0.35); // Sobe mais o nível do chão de forma independente
             
-            const proporcao = Math.max(Math.min(canvas.width, canvas.height) * 0.3, 120);
+            // Personagens menores para dar mais sensação de espaço e caber bem em celulares
+            const proporcao = Math.max(Math.min(canvas.width, canvas.height) * 0.18, 70);
             
             monica.larguraFisica = proporcao * 0.8;
             monica.alturaFisica = proporcao;
@@ -398,38 +402,8 @@ videoIntro.addEventListener("ended", () => {
             if (e) e.preventDefault();
             if (!jogoRodando) return;
 
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const toqueX = clientX - rect.left;
-            const toqueY = clientY - rect.top;
-
-            let acertouOQuadro = false;
-
-            for (let i = 0; i < quadros.length; i++) {
-                let quadro = quadros[i];
-                if (!quadro.coletado) {
-                    const margem = 20; 
-                    if (toqueX >= quadro.x - margem && toqueX <= quadro.x + quadro.tamanho + margem &&
-                        toqueY >= quadro.y - margem && toqueY <= quadro.y + quadro.tamanho + margem) {
-                        
-                        acertouOQuadro = true;
-                        quadro.coletado = true;
-                        corDoCeu = quadro.cor.hex; 
-                        coresEncontradas.add(quadro.cor.nome);
-                        contadorCoresTxt.innerText = coresEncontradas.size;
-                        quadro.x = -1000; 
-
-                        if (coresEncontradas.size === todasCores.length && !terminandoJogo) {
-                            terminandoJogo = true;
-                            setTimeout(vitoria, 3000); 
-                        }
-                        break;
-                    }
-                }
-            }
-
-            if (!acertouOQuadro && !monica.pulando) {
+            // Agora qualquer toque na tela apenas faz a Mônica pular
+            if (!monica.pulando) {
                 monica.velocidadeY = monica.forcaPulo;
                 monica.pulando = true;
             }
@@ -441,7 +415,7 @@ videoIntro.addEventListener("ended", () => {
         function gerarQuadro() {
             if (terminandoJogo) return; // Impede gerar novos quadros ao coletar todos
 
-            const tamanho = monica.alturaFisica * 0.6; 
+            const tamanho = monica.alturaFisica * 0.95; // Aumentado para caber o nome confortavelmente
             let coresFaltando = todasCores.filter(cor => !coresEncontradas.has(cor.nome));
             if (coresFaltando.length === 0) coresFaltando = todasCores;
 
@@ -455,7 +429,7 @@ videoIntro.addEventListener("ended", () => {
             const vaiSerNoAlto = Math.random() > 0.5;
             
             const alturaBaixo = chaoY - tamanho - 10; 
-            const alturaAlto = chaoY - monica.alturaFisica - (tamanho * 1.5); 
+            const alturaAlto = chaoY - monica.alturaFisica - (tamanho * 1.1); // Ajustado para não ficar alto demais para o pulo
             
             const yFixo = vaiSerNoAlto ? alturaAlto : alturaBaixo;
 
@@ -502,16 +476,20 @@ videoIntro.addEventListener("ended", () => {
             
             // --- CÁLCULO DE PROPORÇÃO E MOVIMENTO DO FUNDO ---
             let fundoLargura = canvas.width; 
-            if (imgFundo.complete && imgFundo.naturalHeight !== 0) {
-                let proporcaoFundo = canvas.height / imgFundo.naturalHeight;
-                fundoLargura = imgFundo.naturalWidth * proporcaoFundo;
+            if (imgFundo1.complete && imgFundo1.naturalHeight !== 0) {
+                // Em telas de celular (em pé) usa 40% da altura, em telas deitadas usa 60%
+                let proporcaoFundo = canvas.width < canvas.height ? 
+                    (canvas.height * 0.4) / imgFundo1.naturalHeight : 
+                    (canvas.height * 0.6) / imgFundo1.naturalHeight;
+                fundoLargura = imgFundo1.naturalWidth * proporcaoFundo;
             }
             
             fundoX -= velocidadeJogo * 0.5; 
             
-            // Se o fundo sair da tela, volta suavemente mantendo a largura proporcional
-            if (fundoX <= -fundoLargura) {
-                fundoX += fundoLargura;
+            // Se o fundo sair da tela, volta suavemente mantendo a largura proporcional.
+            // Como alternamos entre 2 imagens, o ciclo tem o dobro do tamanho.
+            if (fundoX <= -(fundoLargura * 2)) {
+                fundoX += (fundoLargura * 2);
             }
             // ------------------------------------------------
 
@@ -580,44 +558,39 @@ videoIntro.addEventListener("ended", () => {
         function desenhar() {
             if (!jogoRodando) return; 
 
+            // 1. Pinta o céu com a cor do ambiente no fundo
+            ctx.fillStyle = corDoCeu;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
             // --- DESENHA O FUNDO PROPORCIONAL E REPETIDO ---
-            if (imgFundo.complete && imgFundo.naturalHeight !== 0) {
-                // Calcula a proporção para manter a imagem com a altura da tela
-                let proporcaoFundo = canvas.height / imgFundo.naturalHeight;
-                let fundoLargura = imgFundo.naturalWidth * proporcaoFundo;
+            if (imgFundo1.complete && imgFundo1.naturalHeight !== 0) {
+                let proporcaoFundo = canvas.width < canvas.height ? 
+                    (canvas.height * 0.4) / imgFundo1.naturalHeight : 
+                    (canvas.height * 0.6) / imgFundo1.naturalHeight;
+                let fundoLargura = imgFundo1.naturalWidth * proporcaoFundo;
+                let fundoAltura = imgFundo1.naturalHeight * proporcaoFundo;
+                
+                // --- AJUSTE DA ALTURA DO CENÁRIO ---
+                // Cenário agora é sempre centralizado verticalmente na tela
+                let yFundo = (canvas.height - fundoAltura) / 2;
                 
                 // Calcula quantas cópias da imagem precisa para cobrir a tela do celular/PC
-                let quantidadeImagens = Math.ceil(canvas.width / fundoLargura) + 1;
+                // Precisamos de +2 porque o bloco deslocado agora tem o tamanho de 2 imagens
+                let quantidadeImagens = Math.ceil(canvas.width / fundoLargura) + 2;
                 
                 for (let i = 0; i < quantidadeImagens; i++) {
-                    ctx.drawImage(imgFundo, fundoX + (i * fundoLargura), 0, fundoLargura, canvas.height);
+                    let imagemAtual = (i % 2 === 0) ? imgFundo1 : imgFundo2;
+                    if (imagemAtual.complete && imagemAtual.naturalHeight !== 0) {
+                        ctx.drawImage(imagemAtual, fundoX + (i * fundoLargura), yFundo, fundoLargura, fundoAltura);
+                    }
                 }
-            } else {
-                ctx.fillStyle = "#FFF";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // Chão e grama mantidos como base segura de piso
-            ctx.fillStyle = "#98FB98"; 
-            // --- TEXTURA DO CHÃO (Grama e Terra com Gradiente) ---
-            // Terra (Fundo com profundidade)
-            let gradTerra = ctx.createLinearGradient(0, chaoY, 0, canvas.height);
-            gradTerra.addColorStop(0, "#8B4513");
-            gradTerra.addColorStop(1, "#4A250A");
-            ctx.fillStyle = gradTerra; 
-            ctx.fillRect(0, chaoY, canvas.width, canvas.height - chaoY);
-            ctx.fillStyle = "#8B4513"; 
-            ctx.fillRect(0, chaoY, canvas.width, 10);
-            
-            // Grama (Topo com variação de cor)
-            let gradGrama = ctx.createLinearGradient(0, chaoY, 0, chaoY + 20);
-            gradGrama.addColorStop(0, "#7CFC00"); // Verde claro brilhante no topo
-            gradGrama.addColorStop(1, "#228B22"); // Verde escuro na base da grama
-            ctx.fillStyle = gradGrama; 
-            ctx.fillRect(0, chaoY, canvas.width, 20);
+            // --- TEXTURA DO CHÃO ---
+            // Removemos a terra. O espaço abaixo da grama agora mudará de cor com o resto do cenário!
 
             // Filtro da cor (efeito mágico no cenário)
-            ctx.globalAlpha = 0.4; 
+            ctx.globalAlpha = 0.2; // Reduzido pois o céu de verdade atrás já está mudando de cor
             ctx.fillStyle = corDoCeu;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.globalAlpha = 1.0; 
@@ -661,9 +634,10 @@ videoIntro.addEventListener("ended", () => {
                     ctx.fillStyle = quadro.cor.texto;
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    const fontSize = quadro.tamanho * 0.25; 
+                    const fontSize = quadro.tamanho * 0.22; 
                     ctx.font = `bold ${fontSize}px "Coiny"`;
-                    ctx.fillText(quadro.cor.nome, quadro.x + (quadro.tamanho / 2), quadro.y + (quadro.tamanho / 2));
+                    // O último parâmetro impõe um limite máximo de largura, espremendo o texto se necessário
+                    ctx.fillText(quadro.cor.nome, quadro.x + (quadro.tamanho / 2), quadro.y + (quadro.tamanho / 2), quadro.tamanho - 10);
                 }
             }
 
