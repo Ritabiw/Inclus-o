@@ -36,8 +36,7 @@ function carregarEtapa() {
             sfxVictory.play().catch(e => console.log("Erro de áudio:", e));
         }
         setTimeout(() => {
-            alert("VOCÊ VENCEU!");
-            window.location.href = "../../../index.html";
+            mostrarTelaFim();
         }, 1500); // Aguarda um momento pro som tocar antes de redirecionar
         return;
     }
@@ -49,6 +48,7 @@ function carregarEtapa() {
     
     slotsContainer.innerHTML = "";
     lettersContainer.innerHTML = "";
+    slotsContainer.classList.remove("success-flash");
 
     let letras = nivel.word.split("");
     
@@ -130,6 +130,7 @@ function soltarArraste(e) {
             
             // Função que tocará o som de acerto e, ao fim dele, mostrará o relógio
             const tocarAcerto = () => {
+                slotsContainer.classList.add("success-flash"); // Adiciona o efeito visual verde
                 if (sfxWordCorrect) {
                     sfxWordCorrect.currentTime = 0;
                     sfxWordCorrect.play()
@@ -174,6 +175,9 @@ function soltarArraste(e) {
 }
 
 function mostrarRelogioEPassarDeFase() {
+    // Remove o efeito visual verde
+    slotsContainer.classList.remove("success-flash");
+
     // Mostra a animação do relógio
     clockOverlay.style.display = 'flex';
     
@@ -184,5 +188,23 @@ function mostrarRelogioEPassarDeFase() {
         carregarEtapa(); 
     }, 2000);
 }
+
+function mostrarTelaFim() {
+    document.getElementById("game-container").style.display = "none";
+    document.querySelector("h1.container").style.display = "none";
+    document.getElementById("tela-fim").style.display = "flex";
+}
+
+document.getElementById("btn-jogar").addEventListener("click", () => {
+    document.getElementById("game-container").style.display = "";
+    document.querySelector("h1.container").style.display = "";
+    document.getElementById("tela-fim").style.display = "none";
+    etapaAtual = 0;
+    carregarEtapa();
+});
+
+document.getElementById("btn-inicio").addEventListener("click", () => {
+    window.top.location.href = "../../../index.html"; 
+});
 
 carregarEtapa();
