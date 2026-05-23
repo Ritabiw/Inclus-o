@@ -1,0 +1,30 @@
+<!Doctype html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <title>Inclusão - Conectar Animais</title>
+        <link rel="stylesheet" href="b.css">
+    </head>
+    <body>
+        <div id="ui-topo">
+            <div id="instrucao">CONECTE OS ANIMAIS</div>
+        </div>
+
+        <div class="game-container">
+            <div class="column" id="left-column"></div>
+            <div class="column" id="right-column"></div>
+            <svg id="lines-svg"></svg>
+        </div>
+
+        <!-- Tela de Fim de Jogo -->
+        <div id="tela-fim" style="display: none;">
+            <button id="btn-jogar" class="btn">Jogar novamente</button>
+            <button id="btn-inicio" class="btn">Início</button>
+        </div>
+
+        <audio id="sfx-correct" src="../j1/acerto.mp3"></audio>
+        <audio id="sfx-conquista" src="../j1/conquista.mp3"></audio>
+        <script src="script.js"></script>
+    </body>
+</html>
