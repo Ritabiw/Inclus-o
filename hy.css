@@ -19,6 +19,27 @@ body{
     padding: 20px;
 }
 
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 95%;
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.game-iframe {
+    width: 100%;
+    max-width: 1000px;
+    height: 80vh;
+    min-height: 600px;
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
 .footer {
     margin: auto;
     width: 100%;
@@ -156,10 +177,36 @@ body{
 }
 
 @media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
     .footer {
         padding: 15px;
     }
     .cards-container {
         gap: 15px; /* Reduz o espaço entre os cards em telas menores */
+    }
+    .arrow {
+        width: 45px;
+        height: 45px;
+        top: 10px;
+        left: 10px;
+    }
+    .game-iframe {
+        min-height: 500px; /* Reduz altura mínima no tablet */
+        height: 70vh;
+    }
+}
+
+@media (max-width: 480px) {
+    .arrow {
+        width: 40px;
+        height: 40px;
+        top: 5px;
+        left: 5px;
+    }
+    .game-iframe {
+        min-height: 400px; /* Reduz altura mínima no celular */
+        height: 65vh;
     }
 }
