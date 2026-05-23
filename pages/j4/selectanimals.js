@@ -204,7 +204,7 @@ document.getElementById("btn-jogar").addEventListener("click", () => {
 });
 
 document.getElementById("btn-inicio").addEventListener("click", () => {
-    window.top.location.href = "../../../index.html"; 
+    window.top.location.href = "../../index.html"; 
 });
 
 carregarEtapa();
