@@ -336,18 +336,26 @@
         let fundoX = 0; 
         let ultimaCorGerada = null;
         let terminandoJogo = false;
+        let aguardandoFim = false;
+        let pausado = false;
+        let totalCoresColetadas = 0;
+        let faseAtual = 1;
+        let coelhada = false; // Controle da animação final
+        const META_FINAL = 45; // 15 cores por fase (total de 3 fases)
 
         const monica = {
-            x: 50, y: 0,
+            x: 50, y: 0, alvoX: 50,
             larguraFisica: 0, alturaFisica: 0,
             velocidadeY: 0,
             gravidade: 0.6, 
-            forcaPulo: -16, 
-            pulando: false
+            forcaPulo: -22, 
+            pulando: false,
+            invulneravelAte: 0
         };
 
-        const cebolinha = { x: 0, y: 0, larguraFisica: 0, alturaFisica: 0 };
+        const cebolinha = { x: 0, y: 0, larguraFisica: 0, alturaFisica: 0, velX: 0, velY: 0, voando: false, rotacao: 0 };
         let quadros = []; 
+        let obstaculos = [];
 
         function redimensionarCanvas() {
             canvas.width = window.innerWidth;
@@ -363,7 +371,9 @@
             
             cebolinha.larguraFisica = proporcao * 0.8;
             cebolinha.alturaFisica = proporcao;
-            cebolinha.x = canvas.width - cebolinha.larguraFisica - (canvas.width * 0.1); 
+            if (!jogoRodando) { // Apenas ajusta instantaneamente antes do jogo começar
+                cebolinha.x = canvas.width - cebolinha.larguraFisica - (canvas.width * 0.1); 
+            }
             cebolinha.y = chaoY - cebolinha.alturaFisica;
         }
 
@@ -413,7 +423,7 @@ videoIntro.addEventListener("ended", () => {
         canvas.addEventListener("mousedown", lidarComToque);
 
         function gerarQuadro() {
-            if (terminandoJogo) return; // Impede gerar novos quadros ao coletar todos
+            if (terminandoJogo || aguardandoFim) return; // Impede gerar novos quadros ao coletar todos
 
             const tamanho = monica.alturaFisica * 0.95; // Aumentado para caber o nome confortavelmente
             let coresFaltando = todasCores.filter(cor => !coresEncontradas.has(cor.nome));
@@ -442,6 +452,18 @@ videoIntro.addEventListener("ended", () => {
             });
         }
 
+        function gerarObstaculo() {
+            if (terminandoJogo || aguardandoFim) return;
+            const tamanho = monica.alturaFisica * 0.55; 
+            obstaculos.push({
+                x: canvas.width + tamanho,
+                y: chaoY - tamanho,
+                largura: tamanho,
+                altura: tamanho,
+                tipo: faseAtual
+            });
+        }
+
         function vitoria() {
             jogoRodando = false;
             musicaFundo.pause(); 
@@ -463,7 +485,6 @@ videoIntro.addEventListener("ended", () => {
             if (!jogoRodando) return;
 
             frameCount++;
-            if (frameCount % 600 === 0 && velocidadeJogo < 8) velocidadeJogo += 0.5;
 
             monica.y += monica.velocidadeY;
             monica.velocidadeY += monica.gravidade;
@@ -494,7 +515,12 @@ videoIntro.addEventListener("ended", () => {
             // ------------------------------------------------
 
             if (frameCount % Math.max(90, Math.floor(150 - velocidadeJogo * 5)) === 0) {
-                if (Math.random() > 0.2) gerarQuadro(); 
+                let sorteio = Math.random();
+                if (sorteio > 0.7) {
+                    gerarObstaculo(); 
+                } else if (sorteio > 0.2) {
+                    gerarQuadro(); 
+                }
             }
 
             for (let i = 0; i < quadros.length; i++) {
@@ -512,16 +538,92 @@ videoIntro.addEventListener("ended", () => {
                     quadro.coletado = true;
                     corDoCeu = quadro.cor.hex; 
                     coresEncontradas.add(quadro.cor.nome);
-                    contadorCoresTxt.innerText = coresEncontradas.size;
+                    totalCoresColetadas++;
+                    contadorCoresTxt.innerText = totalCoresColetadas;
                     quadro.x = -1000; 
 
-                    if (coresEncontradas.size === todasCores.length && !terminandoJogo) {
-                        terminandoJogo = true;
-                        setTimeout(vitoria, 3000); 
+                    if (totalCoresColetadas >= META_FINAL && !terminandoJogo && !aguardandoFim) {
+                        aguardandoFim = true;
+                        setTimeout(() => {
+                            terminandoJogo = true;
+                        }, 2500); // Eles correm livremente por mais 2.5 segundos para a tela limpar
+                        // O setTimeout para a vitória agora só será chamado no momento em que o coelho atingir o Cebolinha!
+                    } else if (totalCoresColetadas >= 30 && faseAtual === 2) {
+                        faseAtual = 3;
+                        velocidadeJogo = 8.5; // Fica bem mais rápido
+                    } else if (totalCoresColetadas >= 15 && faseAtual === 1) {
+                        faseAtual = 2;
+                        velocidadeJogo = 6.5; // Acelera um pouco
                     }
                 }
             }
             quadros = quadros.filter(q => q.x + q.tamanho > -50);
+
+            for (let i = 0; i < obstaculos.length; i++) {
+                let obs = obstaculos[i];
+                obs.x -= velocidadeJogo; 
+
+                // Margem de erro (hitbox reduzida para o jogo ser mais justo)
+                let margemX = obs.largura * 0.25;
+                let margemY = obs.altura * 0.25;
+
+                let bateu = (
+                    monica.x < obs.x + obs.largura - margemX &&
+                    monica.x + monica.larguraFisica > obs.x + margemX &&
+                    monica.y < obs.y + obs.altura - margemY &&
+                    monica.y + monica.alturaFisica > obs.y + margemY
+                );
+
+                if (bateu && !terminandoJogo && !aguardandoFim && frameCount > monica.invulneravelAte) {
+                    monica.invulneravelAte = frameCount + 90; // A personagem fica invulnerável e pisca por aprox 1.5s
+                    pausado = true;
+                    setTimeout(() => {
+                        pausado = false;
+                    }, 1000); // Pausa temporariamente por 1 segundo (1000 ms)
+                }
+            }
+            obstaculos = obstaculos.filter(o => o.x + o.largura > -50);
+
+            // --- APROXIMAÇÃO DA MÔNICA E COELHADA FINAL ---
+            if (terminandoJogo) {
+                // Freia o jogo gradativamente para a câmera "focar" nos personagens
+                if (velocidadeJogo > 0.1) {
+                    velocidadeJogo *= 0.95; 
+                } else {
+                    velocidadeJogo = 0;
+                }
+                
+                monica.alvoX = cebolinha.x; // Corre com tudo pra cima dele
+                
+                // Quando a Mônica alcançar o Cebolinha
+                if (!coelhada && monica.x >= cebolinha.x - (monica.larguraFisica * 0.5)) {
+                    coelhada = true;
+                    monica.velocidadeY = -12; // Mônica dá um pulo de ataque
+                    cebolinha.voando = true;
+                    cebolinha.velY = -15;
+                    cebolinha.velX = 12;
+                }
+            } else if (faseAtual === 1) {
+                monica.alvoX = 50;
+            } else if (faseAtual === 2) {
+                monica.alvoX = canvas.width * 0.35; // Fase 2: Mônica avança pelo cenário
+            } else if (faseAtual === 3) {
+                monica.alvoX = canvas.width * 0.65; // Fase 3: Chega bem perto, mas aguarda o fim
+            }
+            // Movimento suave deslizando até a posição alvo da fase
+            monica.x += (monica.alvoX - monica.x) * 0.02;
+
+            if (cebolinha.voando) {
+                cebolinha.x += cebolinha.velX;
+                cebolinha.y += cebolinha.velY;
+                cebolinha.velY += monica.gravidade;
+                cebolinha.rotacao += 25; // Gira no ar
+
+                // Assim que ele voar para fora da tela, o vídeo inicia imediatamente
+                if (cebolinha.x > canvas.width || cebolinha.y > canvas.height) {
+                    if (jogoRodando) vitoria();
+                }
+            }
         }
 
         btnReiniciar.addEventListener("click", () => {
@@ -530,7 +632,10 @@ videoIntro.addEventListener("ended", () => {
             document.getElementById("botoes-fim").style.display = "none";
             
             quadros = [];
+            obstaculos = [];
             coresEncontradas.clear();
+            totalCoresColetadas = 0;
+            faseAtual = 1;
             contadorCoresTxt.innerText = "0";
             velocidadeJogo = 4;
             frameCount = 0;
@@ -539,10 +644,22 @@ videoIntro.addEventListener("ended", () => {
             fundoX = 0; 
             ultimaCorGerada = null;
             terminandoJogo = false;
+            aguardandoFim = false;
+            pausado = false;
+            coelhada = false;
             
+            monica.x = 50;
+            monica.alvoX = 50;
             monica.y = chaoY - monica.alturaFisica;
             monica.velocidadeY = 0;
             monica.pulando = false;
+            monica.invulneravelAte = 0;
+            domMonica.style.opacity = "1";
+
+            cebolinha.x = canvas.width - cebolinha.larguraFisica - (canvas.width * 0.1);
+            cebolinha.voando = false;
+            cebolinha.rotacao = 0;
+            domCebolinha.style.transform = "none";
             
             telaVitoria.style.display = "none";
             domMonica.style.display = "block";
@@ -641,6 +758,92 @@ videoIntro.addEventListener("ended", () => {
                 }
             }
 
+            // Desenha os obstáculos de acordo com a fase atual
+            for (let obs of obstaculos) {
+                if (obs.tipo === 1) {
+                    // Fase 1: Cone de trânsito laranja
+                    ctx.fillStyle = "#FF4500"; 
+                    ctx.beginPath();
+                    ctx.moveTo(obs.x + obs.largura / 2, obs.y);
+                    ctx.lineTo(obs.x + obs.largura, obs.y + obs.altura);
+                    ctx.lineTo(obs.x, obs.y + obs.altura);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = "#333";
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.beginPath();
+                    ctx.moveTo(obs.x + obs.largura * 0.35, obs.y + obs.altura * 0.3);
+                    ctx.lineTo(obs.x + obs.largura * 0.65, obs.y + obs.altura * 0.3);
+                    ctx.lineTo(obs.x + obs.largura * 0.75, obs.y + obs.altura * 0.6);
+                    ctx.lineTo(obs.x + obs.largura * 0.25, obs.y + obs.altura * 0.6);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (obs.tipo === 2) {
+                    // Fase 2: Caixote de madeira
+                    ctx.fillStyle = "#8B4513";
+                    ctx.fillRect(obs.x, obs.y, obs.largura, obs.altura);
+                    ctx.strokeStyle = "#4A2500";
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(obs.x, obs.y, obs.largura, obs.altura);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(obs.x, obs.y);
+                    ctx.lineTo(obs.x + obs.largura, obs.y + obs.altura);
+                    ctx.moveTo(obs.x + obs.largura, obs.y);
+                    ctx.lineTo(obs.x, obs.y + obs.altura);
+                    ctx.stroke();
+                } else if (obs.tipo === 3) {
+                    // Fase 3: Bomba Clássica (estilo quadrinhos)
+                    let raio = obs.largura * 0.4;
+                    let centroX = obs.x + obs.largura / 2;
+                    let centroY = obs.y + obs.altura - raio;
+
+                    // Pavio
+                    ctx.strokeStyle = "#CD853F";
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(centroX, centroY - raio);
+                    ctx.quadraticCurveTo(centroX + obs.largura * 0.3, centroY - raio - obs.altura * 0.3, centroX + obs.largura * 0.4, centroY - raio - obs.altura * 0.1);
+                    ctx.stroke();
+
+                    // Corpo da bomba e Brilho 3D
+                    ctx.fillStyle = "#111111"; // Preto escuro
+                    ctx.beginPath();
+                    ctx.arc(centroX, centroY, raio, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.3)"; // Brilho branco da luz
+                    ctx.beginPath();
+                    ctx.arc(centroX - raio * 0.3, centroY - raio * 0.3, raio * 0.25, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Faísca animada (muda de tamanho de acordo com os frames)
+                    let piscaFaisca = (frameCount % 10 > 5) ? obs.largura * 0.15 : obs.largura * 0.1;
+                    ctx.fillStyle = "#FF4500"; // Laranja/Vermelho
+                    ctx.beginPath(); ctx.arc(centroX + obs.largura * 0.4, centroY - raio - obs.altura * 0.1, piscaFaisca, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = "#FFFF00"; // Miolo amarelo
+                    ctx.beginPath(); ctx.arc(centroX + obs.largura * 0.4, centroY - raio - obs.altura * 0.1, piscaFaisca * 0.5, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+
+            // HUD - Textos de Progresso e Fase (Desenhados no Canvas para fluidez)
+            ctx.fillStyle = "#FFF";
+            const fontSizeHud = Math.max(16, canvas.width * 0.02);
+            ctx.font = `bold ${fontSizeHud}px "Coiny"`;
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+            ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            ctx.fillText(`FASE ${faseAtual}`, 20, 20);
+            ctx.fillText(`CORES: ${totalCoresColetadas} / ${META_FINAL}`, 20, 20 + fontSizeHud * 1.5);
+            
+            ctx.shadowColor = "transparent"; // Restaura a sombra para não afetar os próximos frames
+
             // Animação dos GIFs
             let saltoCorrida = (!monica.pulando && frameCount % 12 < 6) ? -5 : 0;
             let saltoCebolinha = (frameCount % 10 > 5) ? -5 : 0;
@@ -650,15 +853,46 @@ videoIntro.addEventListener("ended", () => {
             domMonica.style.left = monica.x + "px";
             domMonica.style.top = (monica.y + saltoCorrida) + "px";
 
+            // Efeito de piscar (acender e apagar) após bater no obstáculo
+            if (frameCount < monica.invulneravelAte) {
+                domMonica.style.opacity = (frameCount % 10 < 5) ? "0.2" : "1";
+            } else {
+                domMonica.style.opacity = "1";
+            }
+
             domCebolinha.style.width = cebolinha.larguraFisica + "px";
             domCebolinha.style.height = cebolinha.alturaFisica + "px";
             domCebolinha.style.left = cebolinha.x + "px";
             domCebolinha.style.top = (cebolinha.y + saltoCebolinha) + "px";
+
+            if (cebolinha.voando) {
+                domCebolinha.style.transform = `rotate(${cebolinha.rotacao}deg)`;
+            } else {
+                domCebolinha.style.transform = "none";
+            }
+
+            // Efeito visual (Histórias em quadrinhos) ao dar a coelhada
+            if (coelhada) {
+                ctx.save();
+                ctx.fillStyle = "#FF0000";
+                ctx.strokeStyle = "#FFFF00";
+                ctx.lineWidth = 4;
+                ctx.font = `bold ${Math.max(40, canvas.width * 0.08)}px "Coiny"`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.translate(cebolinha.x, cebolinha.y + cebolinha.alturaFisica / 2);
+                ctx.rotate(-0.2); // Texto levemente inclinado
+                ctx.strokeText("POF!", 0, 0);
+                ctx.fillText("POF!", 0, 0);
+                ctx.restore();
+            }
         }
 
         function loop() {
             if (jogoRodando) {
-                atualizar();
+                if (!pausado) {
+                    atualizar();
+                }
                 desenhar();
                 requestAnimationFrame(loop);
             }
