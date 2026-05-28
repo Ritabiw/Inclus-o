@@ -256,7 +256,6 @@
     </style>
 </head>
 <body>
-<div id="contador-cores" style="display:none;">0</div>
 
       <div id="tela-inicial">
         <h1>CORRIDA DAS CORES</h1>
@@ -288,7 +287,6 @@
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        const contadorCoresTxt = document.getElementById("contador-cores");
         const telaVitoria = document.getElementById("tela-vitoria");
         const btnReiniciar = document.getElementById("btn-reiniciar");
         const telaInicial = document.getElementById("tela-inicial");
@@ -539,7 +537,6 @@ videoIntro.addEventListener("ended", () => {
                     corDoCeu = quadro.cor.hex; 
                     coresEncontradas.add(quadro.cor.nome);
                     totalCoresColetadas++;
-                    contadorCoresTxt.innerText = totalCoresColetadas;
                     quadro.x = -1000; 
 
                     if (totalCoresColetadas >= META_FINAL && !terminandoJogo && !aguardandoFim) {
@@ -636,7 +633,6 @@ videoIntro.addEventListener("ended", () => {
             coresEncontradas.clear();
             totalCoresColetadas = 0;
             faseAtual = 1;
-            contadorCoresTxt.innerText = "0";
             velocidadeJogo = 4;
             frameCount = 0;
             corDoCeu = "#87CEEB"; 
@@ -840,7 +836,6 @@ videoIntro.addEventListener("ended", () => {
             ctx.shadowOffsetY = 2;
             
             ctx.fillText(`FASE ${faseAtual}`, 20, 20);
-            ctx.fillText(`CORES: ${totalCoresColetadas} / ${META_FINAL}`, 20, 20 + fontSizeHud * 1.5);
             
             ctx.shadowColor = "transparent"; // Restaura a sombra para não afetar os próximos frames
 
