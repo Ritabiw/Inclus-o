@@ -487,6 +487,14 @@ videoIntro.addEventListener("ended", () => {
             monica.y += monica.velocidadeY;
             monica.velocidadeY += monica.gravidade;
 
+            // Impede a Mônica de pular para fora da tela ou sobre o texto "FASE"
+            const fontSizeHud = Math.max(16, canvas.width * 0.02);
+            const tetoY = 20 + fontSizeHud + 10; // Posição Y do texto (20) + altura do texto + margem de 10px
+            if (monica.y < tetoY) {
+                monica.y = tetoY;
+                monica.velocidadeY = 0; // Zera a velocidade para ela começar a cair imediatamente
+            }
+
             if (monica.y >= chaoY - monica.alturaFisica) {
                 monica.y = chaoY - monica.alturaFisica;
                 monica.pulando = false;
